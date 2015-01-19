@@ -61,15 +61,6 @@ public enum Scrog {
         INSTANCE.stop();
     }
 
-    /**
-     * Set initial values for window.
-     *
-     * @param width
-     * @param height
-     */
-    public static void setWindowSize(int width, int height){
-        ScrogSingleton.INSTANCE.setWindowSize(width, height);
-    }
 
     private void start(Context context){
         this.mContext = context;

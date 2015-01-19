@@ -19,16 +19,10 @@ II. Usage:
 
         Scrog.init(this);
 		
-2. Add fe. to onDestroy();       
+2. Add f.e. to onDestroy();       
 
         Scrog.destroy();
 		
-3. To printLine
+3. For printing:
 
-        Scrog.i("ttttttt");        
-		
-
-PS: You may change deafult windows size manually, picking down-right corner. Or do it with method: 
-	Scrog.setWindowSize(int width, int height)
-
-
+        Scrog.i("text");        

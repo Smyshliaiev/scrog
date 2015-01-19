@@ -26,9 +26,5 @@ II. Usage:
 3. To printLine
 
         Scrog.i("ttttttt");        
-		
-
-PS: You may change deafult windows size manually, picking down-right corner. Or do it with method: 
-	Scrog.setWindowSize(int width, int height)
-
+	
 
