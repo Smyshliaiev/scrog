@@ -18,11 +18,13 @@ package com.smyshliaiev.scrog;
 import android.content.Context;
 import android.content.Intent;
 
+import java.lang.reflect.InvocationHandler;
+
 /**
  * Class provides UI logging.
  * Use init(Context) to start with it.
  * Call destroy() when finished.
- * Call printLine(String) to print the line of a text.
+ * Call i(String) to print the line of a text.
  * Call setWindowSize(int, int) for setting initial values of the width and height.
  *
  * @author Anton Smyshliaiev (anton.emale@gmail.com)
@@ -30,10 +32,17 @@ import android.content.Intent;
 public enum Scrog {
     INSTANCE;
     private static final String ACTION_STRING_SCROG_SERVICE = "ToScrogService";
-    private Context mContext;
-
+    private static Context mContext;
 
     private Scrog() {
+    }
+
+    /**
+     * Call it for printing the line.
+     * @param text - Text to print.
+     */
+    public static void i(String text){
+        INSTANCE.printLine(text);
     }
 
     /**
@@ -41,27 +50,15 @@ public enum Scrog {
      *
      * @param context - Android Context of your application.
      */
-    public void init(Context context){
-        this.mContext = context;
-        mContext.startService(new Intent(mContext, ScrogService.class));
+    public static void init(Context context){
+        INSTANCE.start(context);
     }
 
     /**
      * Call it when finish your work.
      */
-    public void destroy() {
-        mContext.stopService(new Intent(mContext, ScrogService.class));
-    }
-
-    /**
-     * Call it for printing the line.
-     * @param text - Text to print.
-     */
-    public void printLine(String text) {
-        Intent new_intent = new Intent();
-        new_intent.setAction(ACTION_STRING_SCROG_SERVICE);
-        new_intent.putExtra("DATA", text);
-        mContext.sendBroadcast(new_intent);
+    public static void destroy() {
+        INSTANCE.stop();
     }
 
     /**
@@ -70,9 +67,22 @@ public enum Scrog {
      * @param width
      * @param height
      */
-
-    public void setWindowSize(int width, int height){
+    public static void setWindowSize(int width, int height){
         ScrogSingleton.INSTANCE.setWindowSize(width, height);
+    }
+
+    private void start(Context context){
+        this.mContext = context;
+        mContext.startService(new Intent(mContext, ScrogService.class));
+    }
+    private static void stop() {
+        mContext.stopService(new Intent(mContext, ScrogService.class));
+    }
+    private void printLine(String text) {
+        Intent new_intent = new Intent();
+        new_intent.setAction(ACTION_STRING_SCROG_SERVICE);
+        new_intent.putExtra("DATA", text);
+        mContext.sendBroadcast(new_intent);
     }
 
 }

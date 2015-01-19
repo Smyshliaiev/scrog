@@ -17,18 +17,18 @@ II. Usage:
 
 1. Add f.e. to onCreate():
 
-        Scrog.INSTANCE.init(this);
+        Scrog.init(this);
 		
 2. Add fe. to onDestroy();       
 
-        Scrog.INSTANCE.destroy();
+        Scrog.destroy();
 		
 3. To printLine
 
-        Scrog.INSTANCE.printLine("ttttttt");        
+        Scrog.i("ttttttt");        
 		
 
 PS: You may change deafult windows size manually, picking down-right corner. Or do it with method: 
-	Scrog.INSTANCE.setWindowSize(int width, int height)
+	Scrog.setWindowSize(int width, int height)
 
 
