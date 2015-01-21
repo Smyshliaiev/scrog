@@ -7,6 +7,9 @@ I.Add scrog library:
 
 1. For Android Studio 
 
+Ready .aar library you may find in the "aar" directory of this project. 
+Or you may build the project.
+
 File->New Module->Import .jar or .aar package.
 
 2. File->Project Structure->Dependencies 
