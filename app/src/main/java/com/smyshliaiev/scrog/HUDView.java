@@ -26,6 +26,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.GestureDetector;
@@ -43,14 +44,15 @@ class HUDView extends ViewGroup {
     private WindowManager mWm;
     private WindowManager.LayoutParams mParams;
     private GestureDetector mDetector;
-    private float mDownRawX = 0;
-    private float mDownRawY = 0;
-    private float mDownX = 0;
-    private float mDownY = 0;
+    private float mLastDownRawX = 0;
+    private float mLastDownRawY = 0;
+    private float mLastDownX = 0;
+    private float mLastDownY = 0;
     private int mWidth = 0;
     private int mHeight = 0;
     private int mMinWidth = 0;
     private int mMinHeight = 0;
+    private boolean mTap = true;
 
     private Context mContext;
 
@@ -82,7 +84,7 @@ class HUDView extends ViewGroup {
         mWidth = size.x/2;
         mHeight = size.x/3;
         mMinWidth = size.x/4;
-        mMinHeight = size.y/5;
+        mMinHeight = size.y/4;
 
 
         mPaint.setColor(Color.argb(255, 0, 0, 0));
@@ -126,8 +128,8 @@ class HUDView extends ViewGroup {
         int scaledFontSizePx = getResources().getDimensionPixelSize(R.dimen.myFontSize);
         mPaint.setTextSize(scaledFontSizePx);
         float width = mPaint.measureText("A");
-        mTextObjectManager.setMaxLines(mHeight / scaledFontSizePx);
-        mTextObjectManager.setMaxSymbols((int) (mWidth / width) - 1);
+        mTextObjectManager.setMaxLines(mParams.height / scaledFontSizePx);
+        mTextObjectManager.setMaxSymbols((int) (mParams.width / width) - 1);
     }
 
     private void applyWH(int w, int h){
@@ -149,7 +151,7 @@ class HUDView extends ViewGroup {
         } else {
             Paint clearPaint = new Paint();
             clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-            canvas.drawRect(0, 0, mWidth, mHeight, clearPaint);
+            canvas.drawRect(0, 0, mParams.width, mParams.height, clearPaint);
         }
 
     }
@@ -174,8 +176,8 @@ class HUDView extends ViewGroup {
     public boolean checkTapCoordinates(int tapX, int tapY, Rect rect){
         boolean ret = false;
 
-        if((tapX > rect.left) && (tapX < rect.right)){
-            if((tapY > rect.top) && (tapY < rect.bottom)){
+        if((tapX > rect.left) && (tapX < rect.right*0.8)){
+            if((tapY > rect.top) && (tapY < rect.bottom*0.8)){
                 ret = true;
             }
         }
@@ -183,60 +185,65 @@ class HUDView extends ViewGroup {
         return ret;
     }
 
-
     public boolean onTouchEvent(MotionEvent event) {
-
         mDetector.onTouchEvent(event);
-
-        int scaledFontSize = getResources().getDimensionPixelSize(R.dimen.myFontSize);
-        mPaint.setTextSize(scaledFontSize);
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
-
-                Rect rect = new Rect(0, 0, (int)(mParams.width), (int)(mParams.height*0.8));
-
-                //check where tapped
-                if(checkTapCoordinates((int) mDownX, (int) mDownY, rect))
-                {
-                    //move area
-                    mParams.x = Math.round(event.getRawX() - mDownRawX);
-                    mParams.y = Math.round(event.getRawY() - mDownRawY);
-                }else{
-                    //resize area (right-down corner)
-                    if(Math.round(event.getX()) >= mMinWidth) {
-                        //check for minimal size
-                        mParams.width = Math.round(event.getX());
-                        setTextObjectMaxes();
-                        mWidth = (int) event.getX();
-                    }else{
-                        mParams.width = mMinWidth;
-                        setTextObjectMaxes();
-                        mWidth = mMinWidth;
-
-                    }
-
-                }
-
-                checkMinMaxLimited();
+                checkTapOrResize(event);
+                checkMinMaxBounds();
                 updateViewLayout();
-
                 return true;
+
             case MotionEvent.ACTION_DOWN:
-                mDownRawX = event.getRawX() - mParams.x;
-                mDownRawY = event.getRawY() - mParams.y;
-
-                mDownX = event.getX();
-                mDownY = event.getY();
-
+                setLastTouchCoordinates(event);
                 return true;
+
             case MotionEvent.ACTION_UP:
                 return true;
         }
         return true;
     }
 
-    private void checkMinMaxLimited(){
+    private void checkTapOrResize(MotionEvent event){
+        //move area
+        if(mTap)
+        {
+            mParams.x = Math.round(event.getRawX() - mLastDownRawX);
+            mParams.y = Math.round(event.getRawY() - mLastDownRawY);
+        }
+
+        //resize area (right-down corner)
+        if(!mTap){
+            //check for minimal size width
+            if(Math.round(event.getX()) >= mMinWidth) mParams.width = Math.round(event.getX());
+            else mParams.width = mMinWidth;
+
+            //check for minimal size height
+            if(Math.round(event.getY()) >= mMinHeight) mParams.height = Math.round(event.getY());
+            else mParams.height = mMinHeight;
+
+            setTextObjectMaxes();
+        }
+
+
+    }
+
+    private void setLastTouchCoordinates(MotionEvent event){
+        Rect rect = new Rect(0, 0, (int)(mParams.width), (int)(mParams.height));
+        //check where tapped
+        if(checkTapCoordinates((int) event.getX(), (int) event.getY(), rect)){
+            mTap = true;
+        } else mTap = false;
+
+        mLastDownRawX = event.getRawX() - mParams.x;
+        mLastDownRawY = event.getRawY() - mParams.y;
+
+        mLastDownX = event.getX();
+        mLastDownY = event.getY();
+    }
+
+    private void checkMinMaxBounds(){
         Display display = mWm.getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
