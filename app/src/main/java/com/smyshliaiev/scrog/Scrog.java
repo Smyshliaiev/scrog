@@ -15,10 +15,14 @@
  */
 package com.smyshliaiev.scrog;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.util.Log;
 
-import java.lang.reflect.InvocationHandler;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Class provides UI logging.
@@ -33,6 +37,8 @@ public enum Scrog {
     INSTANCE;
     private static final String ACTION_STRING_SCROG_SERVICE = "ToScrogService";
     private static Context mContext;
+    private ServiceConnection sConn;
+    private CountDownLatch mLatchStarted;
 
     private Scrog() {
     }
@@ -64,16 +70,41 @@ public enum Scrog {
 
     private void start(Context context){
         this.mContext = context;
-        mContext.startService(new Intent(mContext, ScrogService.class));
+        mLatchStarted = new CountDownLatch(1);
+        sConn = new ServiceConnection() {
+            public void onServiceConnected(ComponentName name, IBinder binder) {
+                mLatchStarted.countDown();
+                mContext.unbindService(sConn);
+            }
+
+            public void onServiceDisconnected(ComponentName name) {
+            }
+        };
+
+        Intent intentStart = new Intent(mContext, ScrogService.class);
+        mContext.startService(intentStart);
+        mContext.bindService(intentStart, sConn, mContext.BIND_AUTO_CREATE);
     }
-    private static void stop() {
-        mContext.stopService(new Intent(mContext, ScrogService.class));
+    private void stop() {
+        Intent intentStop = new Intent(mContext, ScrogService.class);
+        mContext.stopService(intentStop);
     }
-    private void printLine(String text) {
-        Intent new_intent = new Intent();
-        new_intent.setAction(ACTION_STRING_SCROG_SERVICE);
-        new_intent.putExtra("DATA", text);
-        mContext.sendBroadcast(new_intent);
+    private void printLine(final String text) {
+        Thread threadPrint = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mLatchStarted.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Intent new_intent = new Intent();
+                new_intent.setAction(ACTION_STRING_SCROG_SERVICE);
+                new_intent.putExtra("DATA", text);
+                mContext.sendBroadcast(new_intent);
+            }
+        });
+        threadPrint.start();
     }
 
 }
