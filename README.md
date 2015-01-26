@@ -5,6 +5,8 @@ Manual.
 
 I.Add scrog library:
 
+Put scrog-1.0.0.aar in the (f.e.) libs folder in your project.
+
 1.1 For Gradle manually
 
 Add to your gradle file where the repositories section is:
