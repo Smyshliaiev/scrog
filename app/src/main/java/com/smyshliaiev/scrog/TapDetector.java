@@ -18,8 +18,15 @@ package com.smyshliaiev.scrog;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
+import android.util.Pair;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Anton Smyshliaiev (anton.emale@gmail.com)
@@ -27,29 +34,44 @@ import android.view.MotionEvent;
 class TapDetector extends GestureDetector.SimpleOnGestureListener {
 
     private static final int ALPHA = 150;
-    private boolean mTextDoubleTapped = false;
     private Paint mPaint;
     private HUDView mView;
+    private List<Colors> colors = new ArrayList<Colors>();
+    private Iterator<Colors> it = colors.iterator();
+    private Colors color;
 
     TapDetector(Paint mPaint, HUDView mView) {
         this.mPaint = mPaint;
         this.mView = mView;
+        addColors();
     }
 
     @Override
     public boolean onDoubleTap(MotionEvent e) {
-        if(!mTextDoubleTapped){
-            mView.setBackgroundColor(Color.BLACK);
-            mPaint.setColor(Color.argb(255, 235, 235, 235));
-            mTextDoubleTapped = true;
-        }
-        else{
-            mView.setBackgroundColor(Color.GRAY);
-            mPaint.setColor(Color.argb(255, 0, 0, 0));
-            mTextDoubleTapped = false;
-        }
+
+        if(!it.hasNext()) {it = colors.iterator();}
+        color = it.next();
+
+        mView.setBackgroundColor(color.bg);
+        mPaint.setColor(color.fg);
         mView.getBackground().setAlpha(ALPHA);
         return true;
     }
 
+    private class Colors{
+        int bg;
+        int fg;
+
+        private Colors(int bg, int fg) {
+            this.bg = bg;
+            this.fg = fg;
+        }
+    }
+
+    private void addColors(){
+        colors.add(new Colors(Color.BLACK, Color.LTGRAY));
+        colors.add(new Colors(Color.GRAY, Color.WHITE));
+        colors.add(new Colors(Color.WHITE, Color.BLACK));
+        colors.add(new Colors(Color.BLACK, Color.GREEN));
+    }
 }
