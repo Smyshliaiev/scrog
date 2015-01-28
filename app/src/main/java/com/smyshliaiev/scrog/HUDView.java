@@ -26,7 +26,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.GestureDetector;
@@ -46,13 +45,12 @@ class HUDView extends ViewGroup {
     private GestureDetector mDetector;
     private float mLastDownRawX = 0;
     private float mLastDownRawY = 0;
-    private float mLastDownX = 0;
-    private float mLastDownY = 0;
     private int mWidth = 0;
     private int mHeight = 0;
     private int mMinWidth = 0;
     private int mMinHeight = 0;
     private boolean mTap = true;
+    private ColorManager colMan = new ColorManager();
 
     private Context mContext;
 
@@ -68,7 +66,7 @@ class HUDView extends ViewGroup {
 
 
     private void init(){
-        TapDetector tapDetector = new TapDetector(mPaint, this);
+        TapDetector tapDetector = new TapDetector(mPaint, this, colMan);
         mDetector = new GestureDetector(mContext, tapDetector);
         Toast toast = Toast.makeText(mContext, "You may double tap, move or resize info window", Toast.LENGTH_LONG);
         toast.show();
@@ -87,7 +85,10 @@ class HUDView extends ViewGroup {
         mMinHeight = size.y/4;
 
 
-        mPaint.setColor(Color.argb(255, 0, 0, 0));
+        mPaint.setColor(colMan.getColor().fg);
+        setBackgroundColor(colMan.getColor().bg);
+        getBackground().setAlpha(ColorManager.ALPHA);
+
         mPaint.setAntiAlias(true);
         mPaint.setTypeface(Typeface.DEFAULT_BOLD);
         mPaint.setTextAlign(Paint.Align.LEFT);
@@ -103,8 +104,6 @@ class HUDView extends ViewGroup {
                 PixelFormat.TRANSLUCENT);
 
         addView(mWm, mParams);
-        setBackgroundColor(Color.GRAY);
-        getBackground().setAlpha(150);
         applyWH(size.x/2, size.y/3);
         setTextObjectMaxes();
         postInvalidate();
@@ -238,9 +237,6 @@ class HUDView extends ViewGroup {
 
         mLastDownRawX = event.getRawX() - mParams.x;
         mLastDownRawY = event.getRawY() - mParams.y;
-
-        mLastDownX = event.getX();
-        mLastDownY = event.getY();
     }
 
     private void checkMinMaxBounds(){

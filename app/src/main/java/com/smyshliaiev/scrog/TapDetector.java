@@ -17,61 +17,36 @@ package com.smyshliaiev.scrog;
 
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.Log;
-import android.util.Pair;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Anton Smyshliaiev (anton.emale@gmail.com)
  */
 class TapDetector extends GestureDetector.SimpleOnGestureListener {
 
-    private static final int ALPHA = 150;
+
     private Paint mPaint;
     private HUDView mView;
-    private List<Colors> colors = new ArrayList<Colors>();
-    private Iterator<Colors> it = colors.iterator();
-    private Colors color;
+    private ColorManager colMan;
 
-    TapDetector(Paint mPaint, HUDView mView) {
+    TapDetector(Paint mPaint, HUDView mView, ColorManager colMan) {
         this.mPaint = mPaint;
         this.mView = mView;
-        addColors();
+        this.colMan = colMan;
     }
 
     @Override
     public boolean onDoubleTap(MotionEvent e) {
-
-        if(!it.hasNext()) {it = colors.iterator();}
-        color = it.next();
-
-        mView.setBackgroundColor(color.bg);
-        mPaint.setColor(color.fg);
-        mView.getBackground().setAlpha(ALPHA);
+        colMan.nextColor();
+        mView.setBackgroundColor(colMan.getColor().bg);
+        mPaint.setColor(colMan.getColor().fg);
+        mView.getBackground().setAlpha(ColorManager.ALPHA);
         return true;
     }
 
-    private class Colors{
-        int bg;
-        int fg;
-
-        private Colors(int bg, int fg) {
-            this.bg = bg;
-            this.fg = fg;
-        }
-    }
-
-    private void addColors(){
-        colors.add(new Colors(Color.BLACK, Color.LTGRAY));
-        colors.add(new Colors(Color.GRAY, Color.WHITE));
-        colors.add(new Colors(Color.WHITE, Color.BLACK));
-        colors.add(new Colors(Color.BLACK, Color.GREEN));
-    }
 }
