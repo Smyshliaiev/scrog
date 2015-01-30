@@ -18,7 +18,6 @@ package com.smyshliaiev.scrog;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -26,6 +25,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.GestureDetector;
@@ -49,13 +49,18 @@ class HUDView extends ViewGroup {
     private int mHeight = 0;
     private int mMinWidth = 0;
     private int mMinHeight = 0;
-    private boolean mTap = true;
+    private TapMode mTap = TapMode.MOVE;
     private ColorManager colMan = new ColorManager();
 
     private Context mContext;
 
     TextObjectManager mTextObjectManager = new TextObjectManager(mPaint);
     boolean mClear = false;
+
+    private enum TapMode {
+        MOVE, RESIZE, CLEAR, IGNORE;
+    }
+
 
     HUDView(Context context) {
         super(context);
@@ -172,30 +177,21 @@ class HUDView extends ViewGroup {
         postInvalidate();
     }
 
-    public boolean checkTapCoordinates(int tapX, int tapY, Rect rect){
-        boolean ret = false;
-
-        if((tapX > rect.left) && (tapX < rect.right*0.8)){
-            if((tapY > rect.top) && (tapY < rect.bottom*0.8)){
-                ret = true;
-            }
-        }
-
-        return ret;
-    }
-
     public boolean onTouchEvent(MotionEvent event) {
         mDetector.onTouchEvent(event);
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
-                checkTapOrResize(event);
+                checkTapAction(event);
                 checkMinMaxBounds();
                 updateViewLayout();
                 return true;
 
             case MotionEvent.ACTION_DOWN:
+                //check where tapped
+                setTapMode((int) event.getX(), (int) event.getY());
                 setLastTouchCoordinates(event);
+
                 return true;
 
             case MotionEvent.ACTION_UP:
@@ -204,37 +200,65 @@ class HUDView extends ViewGroup {
         return true;
     }
 
-    private void checkTapOrResize(MotionEvent event){
-        //move area
-        if(mTap)
-        {
-            mParams.x = Math.round(event.getRawX() - mLastDownRawX);
-            mParams.y = Math.round(event.getRawY() - mLastDownRawY);
+    public void setTapMode(int tapX, int tapY){
+        mTap = TapMode.IGNORE;
+
+        Rect rect = new Rect(0, 0, (int)(mParams.width), (int)(mParams.height));
+
+        if((tapX >= rect.left) && (tapX <= rect.right*0.8)){
+            if((tapY >= rect.top) && (tapY <= rect.bottom*0.8)){
+                mTap = TapMode.MOVE;
+                return;
+            }
         }
 
-        //resize area (right-down corner)
-        if(!mTap){
-            //check for minimal size width
-            if(Math.round(event.getX()) >= mMinWidth) mParams.width = Math.round(event.getX());
-            else mParams.width = mMinWidth;
-
-            //check for minimal size height
-            if(Math.round(event.getY()) >= mMinHeight) mParams.height = Math.round(event.getY());
-            else mParams.height = mMinHeight;
-
-            setTextObjectMaxes();
+        if((tapX >= rect.right*0.8) && (tapX <= rect.right)){
+            if((tapY >= rect.bottom*0.8) && (tapY <= rect.bottom)){
+                mTap = TapMode.RESIZE;
+                return;
+            }
         }
 
+        if((tapX >= rect.right*0.8) && (tapX <= rect.right)){
+            if((tapY >= rect.top) && (tapY <= rect.bottom*0.2)){
+                mTap = TapMode.CLEAR;
+                return;
+            }
+        }
 
     }
 
-    private void setLastTouchCoordinates(MotionEvent event){
-        Rect rect = new Rect(0, 0, (int)(mParams.width), (int)(mParams.height));
-        //check where tapped
-        if(checkTapCoordinates((int) event.getX(), (int) event.getY(), rect)){
-            mTap = true;
-        } else mTap = false;
+    private void checkTapAction(MotionEvent event){
+        //move area
+        switch (mTap){
+            case MOVE:
+                mParams.x = Math.round(event.getRawX() - mLastDownRawX);
+                mParams.y = Math.round(event.getRawY() - mLastDownRawY);
+                break;
 
+            case RESIZE:
+                if(Math.round(event.getX()) >= mMinWidth) mParams.width = Math.round(event.getX());
+                else mParams.width = mMinWidth;
+
+                //check for minimal size height
+                if(Math.round(event.getY()) >= mMinHeight) mParams.height = Math.round(event.getY());
+                else mParams.height = mMinHeight;
+
+                setTextObjectMaxes();
+                break;
+
+            case CLEAR:
+                mTextObjectManager.clear();
+                postInvalidate();
+                break;
+            default:
+                break;
+
+        }
+
+    }
+
+    private synchronized void setLastTouchCoordinates(MotionEvent event){
         mLastDownRawX = event.getRawX() - mParams.x;
         mLastDownRawY = event.getRawY() - mParams.y;
     }

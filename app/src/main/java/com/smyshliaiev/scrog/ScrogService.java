@@ -54,7 +54,7 @@ public class ScrogService extends Service {
 
 
     public int onStartCommand(Intent intent, int flags, int startId) {
-        ScrogSingleton.INSTANCE.printLine("Move, double tap or resize it by drugging right-down corner.");
+        ScrogSingleton.INSTANCE.printLine("You can: move(drag), change color(double tap), resize(down-right corner pick) or clear(upper-right corner tap) this area.");
         startForeground(PID_PROCESS_SCROG, new Notification());
         return super.onStartCommand(intent, flags, startId);
     }
