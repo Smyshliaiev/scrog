@@ -1,6 +1,16 @@
 # scrog
 Android UI logger library.
 
+Main features: 
+
+1. Always on the screen, even if app is paused. It can be destroyed after direct command call.
+2. You can drag it to the any place of the screen.
+3. Font and background colors can be changed by double tap.
+4. You can resize main log window by dragging down right corener of the log window.
+5. Clear the screen by clicking on the right upper corner.
+6. Easy use. Only three API methods.
+7. Easy link with Gradle.
+
 Manual.
 
 I.Add scrog library:
