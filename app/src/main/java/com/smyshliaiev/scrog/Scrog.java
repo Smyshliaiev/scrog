@@ -41,6 +41,7 @@ public enum Scrog {
     private CountDownLatch mLatchStarted;
 
     private Scrog() {
+        mLatchStarted = new CountDownLatch(1);
     }
 
     /**
@@ -70,7 +71,6 @@ public enum Scrog {
 
     private void start(Context context){
         this.mContext = context;
-        mLatchStarted = new CountDownLatch(1);
         sConn = new ServiceConnection() {
             public void onServiceConnected(ComponentName name, IBinder binder) {
                 mLatchStarted.countDown();
